@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Car } from './interfaces/cars.interfaces';
 import { getUUID } from 'src/adapters';
+import { CreateCarDto, UpdateCarDto } from './dtos';
 
 @Injectable()
 export class CarsService {
@@ -39,6 +40,43 @@ export class CarsService {
         }
 
         return carFound;
+    }
+
+    createCar( createCarDto: CreateCarDto ) {
+        const car = {
+            id: getUUID(),
+            ...createCarDto,
+        }
+
+        this.cars.push(car);
+
+        return car;
+    }
+
+    updateCar( id: string, updateCarDto: UpdateCarDto ) {
+        let carFounded = this.findOneById(id);
+
+        if ( updateCarDto.id  && updateCarDto.id !== id ) {
+            // Los errores se pueden manejar con las excepciones de NestJs
+            throw new BadRequestException('Id is different from that of the body');
+        }
+
+        this.cars = this.cars.map(( car ) => {
+            if ( car.id === id ) {
+                carFounded = { ...car, ...updateCarDto, id };
+                return carFounded;
+            }
+
+            return car;
+        });
+
+        return carFounded;
+    }
+
+    deleteCar( id: string ) {
+        let carFounded = this.findOneById(id);
+
+        this.cars = this.cars.filter((car) => car.id !== id);
     }
 
 }
